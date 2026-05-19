@@ -1,5 +1,40 @@
+# Visual Studio
 .vs/
-OpenGL/OpenGL.vcxproj.user
-OpenGL/OpenGL.vcxproj.filters
-OpenGL/OpenGL.vcxproj.filters
+.vscode/
+
+# Build folders
+Debug/
+Release/
 x64/
+x86/
+
+# Visual Studio generated files
+*.suo
+*.user
+*.VC.db
+*.VC.opendb
+
+# IntelliSense
+ipch/
+*.ipch
+
+# Build output
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.lib
+*.exp
+
+# Temporary files
+*.log
+*.tmp
+
+# Shader cache / generated files
+*.bin
+
+# Ignore txt files if needed
+*.txt
+
+# Optional: Ignore generated solution user settings
+*.sln.docstates
