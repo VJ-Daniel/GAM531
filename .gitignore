@@ -23,8 +23,10 @@ ipch/
 *.exe
 *.pdb
 *.ilk
-*.lib
 *.exp
+
+# Never ignore dependency libraries/headers
+!Src/Dependencies/**
 
 # Temporary files
 *.log
