@@ -23,8 +23,6 @@ ipch/
 *.exe
 *.pdb
 *.ilk
-*.lib
-*.exp
 
 # Temporary files
 *.log
@@ -36,5 +34,5 @@ ipch/
 # Ignore txt files if needed
 *.txt
 
-# Optional: Ignore generated solution user settings
+# Optional
 *.sln.docstates
