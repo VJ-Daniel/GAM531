@@ -1,186 +1,192 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <glew.h>
+#include <glfw3.h>
 #include <vector>
-#include <cmath>
+#include <utility>
+#include "Objects/Scene/chessBoard.h"
+#include "Objects/Pieces/queen.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WINDOW_SIZE = 640;
+const int SQUARE_PX   = WINDOW_SIZE / 8;
 
-float circleX = 0.0f;
-float circleY = 0.0f;
-float speed = 0.01f;
+// --- game state ---
+static int  g_whiteCol   = 3, g_whiteRow = 0;   // white queen starts at d1
+static int  g_blackCol   = 3, g_blackRow = 7;   // black queen starts at d8
+static bool g_whiteAlive = true;
+static bool g_blackAlive = true;
+static bool g_whiteTurn  = true;                 // white goes first
+static bool g_gameOver   = false;
 
-const char* vertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec2 aPos;
+static bool g_queenSelected = false;
+static std::vector<std::pair<int, int>> g_validMoves;
 
-uniform vec2 offset;
+// --- chess logic ---
 
-void main()
+// Traces queen rays in all 8 directions.
+// The opponent queen blocks the ray: her square is included (capture) but
+// nothing beyond it is reachable.
+static std::vector<std::pair<int, int>> computeValidMoves(
+    int col, int row,
+    int oppCol, int oppRow, bool oppAlive)
 {
-    gl_Position = vec4(aPos + offset, 0.0, 1.0);
-}
-)";
+    std::vector<std::pair<int, int>> moves;
+    const int dirs[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1} };
 
-const char* fragmentShaderSource = R"(
-#version 330 core
-out vec4 FragColor;
-
-void main()
-{
-    FragColor = vec4(1.0, 0.4, 0.4, 1.0);
-}
-)";
-
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        circleY += speed;
-
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        circleY -= speed;
-
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        circleX -= speed;
-
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        circleX += speed;
-}
-
-unsigned int createShaderProgram()
-{
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return shaderProgram;
-}
-
-std::vector<float> createCircleVertices(float radius, int segments)
-{
-    std::vector<float> vertices;
-
-    vertices.push_back(0.0f);
-    vertices.push_back(0.0f);
-
-    for (int i = 0; i <= segments; i++)
+    for (const auto& d : dirs)
     {
-        float angle = 2.0f * 3.14159f * i / segments;
-
-        float x = cos(angle) * radius;
-        float y = sin(angle) * radius;
-
-        vertices.push_back(x);
-        vertices.push_back(y);
+        int c = col + d[0];
+        int r = row + d[1];
+        while (c >= 0 && c < 8 && r >= 0 && r < 8)
+        {
+            moves.push_back({ c, r });
+            if (oppAlive && c == oppCol && r == oppRow)
+                break;  // opponent queen blocks; include for capture, then stop
+            c += d[0];
+            r += d[1];
+        }
     }
-
-    return vertices;
+    return moves;
 }
+
+static bool isValidMove(int col, int row)
+{
+    for (const auto& m : g_validMoves)
+        if (m.first == col && m.second == row) return true;
+    return false;
+}
+
+// --- mouse callback ---
+
+static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (g_gameOver || button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS) return;
+
+    double mx, my;
+    glfwGetCursorPos(window, &mx, &my);
+
+    int col = static_cast<int>(mx / SQUARE_PX);
+    int row = 7 - static_cast<int>(my / SQUARE_PX);
+    if (col < 0 || col > 7 || row < 0 || row > 7) return;
+
+    // References to whichever queen is active this turn
+    int& aCol   = g_whiteTurn ? g_whiteCol   : g_blackCol;
+    int& aRow   = g_whiteTurn ? g_whiteRow   : g_blackRow;
+    bool& oAlive = g_whiteTurn ? g_blackAlive : g_whiteAlive;
+    int   oCol  = g_whiteTurn ? g_blackCol   : g_whiteCol;
+    int   oRow  = g_whiteTurn ? g_blackRow   : g_whiteRow;
+
+    if (!g_queenSelected)
+    {
+        if (col == aCol && row == aRow)
+        {
+            g_queenSelected = true;
+            g_validMoves    = computeValidMoves(aCol, aRow, oCol, oRow, oAlive);
+        }
+    }
+    else
+    {
+        if (col == aCol && row == aRow)
+        {
+            // Click the queen again → deselect
+            g_queenSelected = false;
+            g_validMoves.clear();
+        }
+        else if (isValidMove(col, row))
+        {
+            aCol = col;
+            aRow = row;
+
+            // Capture: active queen landed on opponent's square
+            if (oAlive && col == oCol && row == oRow)
+            {
+                oAlive     = false;
+                g_gameOver = true;
+            }
+
+            g_queenSelected = false;
+            g_validMoves.clear();
+
+            if (!g_gameOver)
+                g_whiteTurn = !g_whiteTurn;
+        }
+        else
+        {
+            // Click elsewhere → deselect without moving
+            g_queenSelected = false;
+            g_validMoves.clear();
+        }
+    }
+}
+
+// --- entry point ---
 
 int main()
 {
-    if (!glfwInit())
-        return -1;
+    if (!glfwInit()) return -1;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     GLFWwindow* window = glfwCreateWindow(
-        mode->width,
-        mode->height,
-        "WASD Circle Movement",
-        monitor,
-        NULL
-    );
-
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
+        WINDOW_SIZE, WINDOW_SIZE,
+        "Chess Queens  |  White's turn",
+        nullptr, nullptr);
+    if (!window) { glfwTerminate(); return -1; }
 
     glfwMakeContextCurrent(window);
+    glfwSetMouseButtonCallback(window, mouseCallback);
 
-    if (glewInit() != GLEW_OK)
-        return -1;
+    if (glewInit() != GLEW_OK) return -1;
+    glViewport(0, 0, WINDOW_SIZE, WINDOW_SIZE);
 
-    glViewport(0, 0, mode->width, mode->height);
+    ChessBoard board;
+    board.init();
 
-    unsigned int shaderProgram = createShaderProgram();
-
-    std::vector<float> vertices = createCircleVertices(0.1f, 100);
-    int vertexCount = vertices.size() / 2;
-
-    unsigned int VAO;
-    unsigned int VBO;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(float),
-        vertices.data(),
-        GL_STATIC_DRAW
-    );
-
-    glVertexAttribPointer(
-        0,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        2 * sizeof(float),
-        (void*)0
-    );
-
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    Queen whiteQueen(0.95f, 0.90f, 0.75f);  // ivory
+    Queen blackQueen(0.10f, 0.08f, 0.05f);  // dark ebony
+    whiteQueen.init();
+    blackQueen.init();
 
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
 
+        // Reflect game state in the title bar
+        if (g_gameOver)
+            glfwSetWindowTitle(window, g_whiteAlive ? "White wins!" : "Black wins!");
+        else
+            glfwSetWindowTitle(window, g_whiteTurn
+                ? "Chess Queens  |  White's turn — click queen to select"
+                : "Chess Queens  |  Black's turn — click queen to select");
+
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        // Highlight the active queen's square (gold) and valid destinations (green)
+        int hlCol = g_whiteTurn ? g_whiteCol : g_blackCol;
+        int hlRow = g_whiteTurn ? g_whiteRow : g_blackRow;
+        board.draw(hlCol, hlRow, g_queenSelected, g_validMoves);
 
-        int offsetLocation = glGetUniformLocation(shaderProgram, "offset");
-        glUniform2f(offsetLocation, circleX, circleY);
+        if (g_whiteAlive)
+        {
+            float wx = -1.0f + (g_whiteCol + 0.5f) * 0.25f;
+            float wy = -1.0f + (g_whiteRow + 0.5f) * 0.25f;
+            whiteQueen.draw(wx, wy);
+        }
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, vertexCount);
-        glBindVertexArray(0);
+        if (g_blackAlive)
+        {
+            float bx = -1.0f + (g_blackCol + 0.5f) * 0.25f;
+            float by = -1.0f + (g_blackRow + 0.5f) * 0.25f;
+            blackQueen.draw(bx, by);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
-
     glfwTerminate();
-
     return 0;
 }
