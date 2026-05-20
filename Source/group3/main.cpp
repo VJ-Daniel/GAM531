@@ -1,20 +1,29 @@
+// main.cpp
 #include <glew.h>
 #include <glfw3.h>
 #include <vector>
 #include <utility>
 #include "Objects/Scene/chessBoard.h"
 #include "Objects/Pieces/queen.h"
+#include "Objects/Pieces/horse.h" // include for new piece: horse
+// include other pieces here
 
 const int WINDOW_SIZE = 640;
-const int SQUARE_PX   = WINDOW_SIZE / 8;
+const int SQUARE_PX = WINDOW_SIZE / 8;
 
 // --- game state ---
-static int  g_whiteCol   = 3, g_whiteRow = 0;   // white queen starts at d1
-static int  g_blackCol   = 3, g_blackRow = 7;   // black queen starts at d8
+static int  g_whiteCol = 3, g_whiteRow = 0;   // white queen starts at d1
+static int  g_blackCol = 3, g_blackRow = 7;   // black queen starts at d8
+
+static int  g_whiteHorseCol = 1, g_whiteHorseRow = 0;   // white knight at b1
+static int  g_blackHorseCol = 1, g_blackHorseRow = 7;   // black knight at b8
+
 static bool g_whiteAlive = true;
 static bool g_blackAlive = true;
-static bool g_whiteTurn  = true;                 // white goes first
-static bool g_gameOver   = false;
+static bool g_whiteTurn = true;                 // white goes first
+static bool g_gameOver = false;
+
+
 
 static bool g_queenSelected = false;
 static std::vector<std::pair<int, int>> g_validMoves;
@@ -68,18 +77,18 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
     if (col < 0 || col > 7 || row < 0 || row > 7) return;
 
     // References to whichever queen is active this turn
-    int& aCol   = g_whiteTurn ? g_whiteCol   : g_blackCol;
-    int& aRow   = g_whiteTurn ? g_whiteRow   : g_blackRow;
+    int& aCol = g_whiteTurn ? g_whiteCol : g_blackCol;
+    int& aRow = g_whiteTurn ? g_whiteRow : g_blackRow;
     bool& oAlive = g_whiteTurn ? g_blackAlive : g_whiteAlive;
-    int   oCol  = g_whiteTurn ? g_blackCol   : g_whiteCol;
-    int   oRow  = g_whiteTurn ? g_blackRow   : g_whiteRow;
+    int   oCol = g_whiteTurn ? g_blackCol : g_whiteCol;
+    int   oRow = g_whiteTurn ? g_blackRow : g_whiteRow;
 
     if (!g_queenSelected)
     {
         if (col == aCol && row == aRow)
         {
             g_queenSelected = true;
-            g_validMoves    = computeValidMoves(aCol, aRow, oCol, oRow, oAlive);
+            g_validMoves = computeValidMoves(aCol, aRow, oCol, oRow, oAlive);
         }
     }
     else
@@ -98,7 +107,7 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
             // Capture: active queen landed on opponent's square
             if (oAlive && col == oCol && row == oRow)
             {
-                oAlive     = false;
+                oAlive = false;
                 g_gameOver = true;
             }
 
@@ -148,6 +157,14 @@ int main()
     whiteQueen.init();
     blackQueen.init();
 
+    // newly added horses
+    Horse whiteHorse(0.95f, 0.90f, 0.75f);
+    Horse blackHorse(0.10f, 0.08f, 0.05f);
+    whiteHorse.init();
+    blackHorse.init();
+    // newly added horses
+
+
     while (!glfwWindowShouldClose(window))
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -174,6 +191,12 @@ int main()
             float wx = -1.0f + (g_whiteCol + 0.5f) * 0.25f;
             float wy = -1.0f + (g_whiteRow + 0.5f) * 0.25f;
             whiteQueen.draw(wx, wy);
+
+            // newly added White horse
+            float hx = -1.0f + (g_whiteHorseCol + 0.5f) * 0.25f;
+            float hy = -1.0f + (g_whiteHorseRow + 0.5f) * 0.25f;
+            whiteHorse.draw(hx, hy);
+
         }
 
         if (g_blackAlive)
@@ -181,7 +204,15 @@ int main()
             float bx = -1.0f + (g_blackCol + 0.5f) * 0.25f;
             float by = -1.0f + (g_blackRow + 0.5f) * 0.25f;
             blackQueen.draw(bx, by);
+            
+            // newly added Black horse
+            float hx = -1.0f + (g_blackHorseCol + 0.5f) * 0.25f;
+            float hy = -1.0f + (g_blackHorseRow + 0.5f) * 0.25f;
+            blackHorse.draw(hx, hy);
+            
         }
+
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
