@@ -1,3 +1,4 @@
+// chessBoard.h
 #pragma once
 #include <glew.h>
 #include <vector>
