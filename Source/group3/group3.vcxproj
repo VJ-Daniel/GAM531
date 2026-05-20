@@ -151,14 +151,27 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\applications.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Objects\Pieces\bishop.cpp" />
     <ClCompile Include="Objects\Pieces\horse.cpp" />
+    <ClCompile Include="Objects\Pieces\king.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Objects\Pieces\pawn.cpp" />
     <ClCompile Include="Objects\Pieces\queen.cpp" />
+    <ClCompile Include="Objects\Pieces\rook.cpp" />
     <ClCompile Include="Objects\Scene\chessBoard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\applications.h" />
+    <ClInclude Include="Objects\Pieces\bishop.h" />
     <ClInclude Include="Objects\Pieces\horse.h" />
+    <ClInclude Include="Objects\Pieces\king.h" />
+    <ClInclude Include="Objects\Pieces\pawn.h" />
     <ClInclude Include="Objects\Pieces\queen.h" />
+    <ClInclude Include="Objects\Pieces\rook.h" />
     <ClInclude Include="Objects\Scene\chessBoard.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
