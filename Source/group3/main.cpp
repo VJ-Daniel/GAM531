@@ -4,6 +4,8 @@
 #include <utility>
 #include "Objects/Scene/chessBoard.h"
 #include "Objects/Pieces/queen.h"
+#include "Objects/Pieces/pawn.h"
+#include "Objects/Pieces/rook.h"
 
 const int WINDOW_SIZE = 640;
 const int SQUARE_PX   = WINDOW_SIZE / 8;
@@ -11,6 +13,17 @@ const int SQUARE_PX   = WINDOW_SIZE / 8;
 // --- game state ---
 static int  g_whiteCol   = 3, g_whiteRow = 0;   // white queen starts at d1
 static int  g_blackCol   = 3, g_blackRow = 7;   // black queen starts at d8
+
+// Rooks
+static int  g_whiteRook1Col = 0, g_whiteRook1Row = 0;   // white rook left
+static int  g_whiteRook2Col = 7, g_whiteRook2Row = 0;   // white rook right
+static int  g_blackRook1Col = 0, g_blackRook1Row = 7;   // black rook left
+static int  g_blackRook2Col = 7, g_blackRook2Row = 7;   // black rook right
+
+// Pawn
+static int  g_whitePawnCol = 6, g_whitePawnRow = 1;   // white pawn
+static int  g_blackPawnCol = 4, g_blackPawnRow = 6;   // black pawn
+
 static bool g_whiteAlive = true;
 static bool g_blackAlive = true;
 static bool g_whiteTurn  = true;                 // white goes first
@@ -148,6 +161,20 @@ int main()
     whiteQueen.init();
     blackQueen.init();
 
+    Rook whiteRook1(0.95f, 0.90f, 0.75f);
+    Rook blackRook1(0.10f, 0.08f, 0.05f);  
+    Rook whiteRook2(0.95f, 0.90f, 0.75f); 
+    Rook blackRook2(0.10f, 0.08f, 0.05f); 
+    whiteRook1.init();
+    blackRook1.init();
+    whiteRook2.init();
+    blackRook2.init();
+
+    Pawn whitePawn(0.95f, 0.90f, 0.75f);
+    Pawn blackPawn(0.10f, 0.08f, 0.05f);
+    whitePawn.init();
+    blackPawn.init();
+
     while (!glfwWindowShouldClose(window))
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -174,6 +201,21 @@ int main()
             float wx = -1.0f + (g_whiteCol + 0.5f) * 0.25f;
             float wy = -1.0f + (g_whiteRow + 0.5f) * 0.25f;
             whiteQueen.draw(wx, wy);
+
+            //white rook 1
+            float wr1x = -1.0f + (g_whiteRook1Col + 0.5f) * 0.25f;
+            float wr1y = -1.0f + (g_whiteRook1Row + 0.5f) * 0.25f;
+            whiteRook1.draw(wr1x, wr1y);
+
+            //white rook 2
+            float wr2x = -1.0f + (g_whiteRook2Col + 0.5f) * 0.25f;
+            float wr2y = -1.0f + (g_whiteRook2Row + 0.5f) * 0.25f;
+            whiteRook2.draw(wr2x, wr2y);
+
+            //white pawn
+            float wpx = -1.0f + (g_whitePawnCol + 0.5f) * 0.25f;
+            float wpy = -1.0f + (g_whitePawnRow + 0.5f) * 0.25f;
+            whitePawn.draw(wpx, wpy);
         }
 
         if (g_blackAlive)
@@ -181,6 +223,21 @@ int main()
             float bx = -1.0f + (g_blackCol + 0.5f) * 0.25f;
             float by = -1.0f + (g_blackRow + 0.5f) * 0.25f;
             blackQueen.draw(bx, by);
+
+            //black rook 1
+            float br1x = -1.0f + (g_blackRook1Col + 0.5f) * 0.25f;
+            float br1y = -1.0f + (g_blackRook1Row + 0.5f) * 0.25f;
+            blackRook1.draw(br1x, br1y);
+
+            //black rook 2
+            float br2x = -1.0f + (g_blackRook2Col + 0.5f) * 0.25f;
+            float br2y = -1.0f + (g_blackRook2Row + 0.5f) * 0.25f;
+            blackRook2.draw(br2x, br2y);
+
+            //white pawn
+            float bpx = -1.0f + (g_blackPawnCol + 0.5f) * 0.25f;
+            float bpy = -1.0f + (g_blackPawnRow + 0.5f) * 0.25f;
+            blackPawn.draw(bpx, bpy);
         }
 
         glfwSwapBuffers(window);
