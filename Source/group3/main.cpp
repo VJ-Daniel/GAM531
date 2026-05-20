@@ -8,6 +8,7 @@
 #include "Objects/Pieces/rook.h"
 #include "Objects/Pieces/bishop.h"
 #include "Objects/Pieces/horse.h"
+#include "Objects/Pieces/king.h"
 
 const int WINDOW_SIZE = 640;
 const int SQUARE_PX   = WINDOW_SIZE / 8;
@@ -46,7 +47,9 @@ static bool g_whiteBishop2Alive = true;
 static int g_blackBishop2Col = 5, g_blackBishop2Row = 7;
 static bool g_blackBishop2Alive = true;
 
-
+// King
+static int g_whiteKingCol = 4, g_whiteKingRow = 0;   // white king e1
+static int g_blackKingCol = 4, g_blackKingRow = 7;   // black king e8
 
 static bool g_whiteAlive = true;
 static bool g_blackAlive = true;
@@ -185,6 +188,11 @@ int main()
     whiteQueen.init();
     blackQueen.init();
 
+    King whiteKing(0.95f, 0.90f, 0.75f);
+    King blackKing(0.10f, 0.08f, 0.05f);
+    whiteKing.init();
+    blackKing.init();
+
     // Rooks
     Rook whiteRook1(0.95f, 0.90f, 0.75f);
     Rook blackRook1(0.10f, 0.08f, 0.05f);  
@@ -265,6 +273,10 @@ int main()
             float hx2 = -1.0f + (g_whiteHorse2Col + 0.5f) * 0.25f;
             float hy2 = -1.0f + (g_whiteHorse2Row + 0.5f) * 0.25f;
             whiteHorse.draw(hx2, hy2);
+
+            float wkx = -1.0f + (g_whiteKingCol + 0.5f) * 0.25f;
+            float wky = -1.0f + (g_whiteKingRow + 0.5f) * 0.25f;
+            whiteKing.draw(wkx, wky);
         }
 
         if (g_blackAlive)
@@ -296,6 +308,10 @@ int main()
             float hx2 = -1.0f + (g_blackHorse2Col + 0.5f) * 0.25f;
             float hy2 = -1.0f + (g_blackHorse2Row + 0.5f) * 0.25f;
             blackHorse.draw(hx2, hy2);
+
+            float bkx = -1.0f + (g_blackKingCol + 0.5f) * 0.25f;
+            float bky = -1.0f + (g_blackKingRow + 0.5f) * 0.25f;
+            blackKing.draw(bkx, bky);
         }
 
 
