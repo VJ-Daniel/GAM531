@@ -1,16 +1,32 @@
+// main.cpp
 #include <glew.h>
-#include <glfw3.h>
+#include <glfw/glfw3.h>
 #include <vector>
 #include <utility>
+#include "../Source/Objects/Scene/chessBoard.h"
+#include "../Source/Objects/Pieces/bishop.h"
+#include "../Source/Objects/Pieces/horse.h"
+#include "../Source/Objects/Pieces/queen.h"
+// include for new piece: horse
+// include other pieces here
 #include "Objects/Scene/chessBoard.h"
 #include "Objects/Pieces/queen.h"
 #include "Objects/Pieces/pawn.h"
 #include "Objects/Pieces/rook.h"
 
 const int WINDOW_SIZE = 640;
-const int SQUARE_PX   = WINDOW_SIZE / 8;
+const int SQUARE_PX = WINDOW_SIZE / 8;
 
 // --- game state ---
+static int  g_whiteCol = 3, g_whiteRow = 0;   // white queen starts at d1
+static int  g_blackCol = 3, g_blackRow = 7;   // black queen starts at d8
+
+static int  g_whiteHorseCol = 1, g_whiteHorseRow = 0;   // white knight at b1
+static int  g_blackHorseCol = 1, g_blackHorseRow = 7;   // black knight at b8
+
+static int  g_whiteHorse2Col = 6, g_whiteHorse2Row = 0;   // white knight at b1
+static int  g_blackHorse2Col = 6, g_blackHorse2Row = 7;   // black knight at b8
+
 static int  g_whiteCol   = 3, g_whiteRow = 0;   // white queen starts at d1
 static int  g_blackCol   = 3, g_blackRow = 7;   // black queen starts at d8
 
@@ -26,8 +42,24 @@ static int  g_blackPawnCol = 4, g_blackPawnRow = 6;   // black pawn
 
 static bool g_whiteAlive = true;
 static bool g_blackAlive = true;
-static bool g_whiteTurn  = true;                 // white goes first
-static bool g_gameOver   = false;
+static bool g_whiteTurn = true;                 // white goes first
+static bool g_gameOver = false;
+
+// Bishop
+
+static int g_whiteBishopCol = 2, g_whiteBishopRow = 0;
+static bool g_whiteBishopAlive = true;
+
+static int g_blackBishopCol = 2, g_blackBishopRow = 7;
+static bool g_blackBishopAlive = true;
+
+static int g_whiteBishop2Col = 5, g_whiteBishop2Row = 0;
+static bool g_whiteBishop2Alive = true;
+
+static int g_blackBishop2Col = 5, g_blackBishop2Row = 7;
+static bool g_blackBishop2Alive = true;
+
+
 
 static bool g_queenSelected = false;
 static std::vector<std::pair<int, int>> g_validMoves;
@@ -81,25 +113,25 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
     if (col < 0 || col > 7 || row < 0 || row > 7) return;
 
     // References to whichever queen is active this turn
-    int& aCol   = g_whiteTurn ? g_whiteCol   : g_blackCol;
-    int& aRow   = g_whiteTurn ? g_whiteRow   : g_blackRow;
+    int& aCol = g_whiteTurn ? g_whiteCol : g_blackCol;
+    int& aRow = g_whiteTurn ? g_whiteRow : g_blackRow;
     bool& oAlive = g_whiteTurn ? g_blackAlive : g_whiteAlive;
-    int   oCol  = g_whiteTurn ? g_blackCol   : g_whiteCol;
-    int   oRow  = g_whiteTurn ? g_blackRow   : g_whiteRow;
+    int   oCol = g_whiteTurn ? g_blackCol : g_whiteCol;
+    int   oRow = g_whiteTurn ? g_blackRow : g_whiteRow;
 
     if (!g_queenSelected)
     {
         if (col == aCol && row == aRow)
         {
             g_queenSelected = true;
-            g_validMoves    = computeValidMoves(aCol, aRow, oCol, oRow, oAlive);
+            g_validMoves = computeValidMoves(aCol, aRow, oCol, oRow, oAlive);
         }
     }
     else
     {
         if (col == aCol && row == aRow)
         {
-            // Click the queen again → deselect
+            // Click the queen again ? deselect
             g_queenSelected = false;
             g_validMoves.clear();
         }
@@ -111,7 +143,7 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
             // Capture: active queen landed on opponent's square
             if (oAlive && col == oCol && row == oRow)
             {
-                oAlive     = false;
+                oAlive = false;
                 g_gameOver = true;
             }
 
@@ -123,7 +155,7 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
         }
         else
         {
-            // Click elsewhere → deselect without moving
+            // Click elsewhere ? deselect without moving
             g_queenSelected = false;
             g_validMoves.clear();
         }
@@ -161,6 +193,19 @@ int main()
     whiteQueen.init();
     blackQueen.init();
 
+    // newly added horses
+    Horse whiteHorse(0.95f, 0.90f, 0.75f);
+    Horse blackHorse(0.10f, 0.08f, 0.05f);
+    whiteHorse.init();
+    blackHorse.init();
+
+    // newly added bishop
+    Bishop whiteBishop(0.95f, 0.90f, 0.75f);
+    Bishop blackBishop(0.10f, 0.08f, 0.05f);
+    whiteBishop.init();
+    blackBishop.init();
+
+
     Rook whiteRook1(0.95f, 0.90f, 0.75f);
     Rook blackRook1(0.10f, 0.08f, 0.05f);  
     Rook whiteRook2(0.95f, 0.90f, 0.75f); 
@@ -185,8 +230,8 @@ int main()
             glfwSetWindowTitle(window, g_whiteAlive ? "White wins!" : "Black wins!");
         else
             glfwSetWindowTitle(window, g_whiteTurn
-                ? "Chess Queens  |  White's turn — click queen to select"
-                : "Chess Queens  |  Black's turn — click queen to select");
+                ? "Chess Queens  |  White's turn � click queen to select"
+                : "Chess Queens  |  Black's turn � click queen to select");
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -201,6 +246,17 @@ int main()
             float wx = -1.0f + (g_whiteCol + 0.5f) * 0.25f;
             float wy = -1.0f + (g_whiteRow + 0.5f) * 0.25f;
             whiteQueen.draw(wx, wy);
+
+            // newly added White horse
+            float hx = -1.0f + (g_whiteHorseCol + 0.5f) * 0.25f;
+            float hy = -1.0f + (g_whiteHorseRow + 0.5f) * 0.25f;
+            whiteHorse.draw(hx, hy);
+
+            // newly added White horse
+            float hx2 = -1.0f + (g_whiteHorse2Col + 0.5f) * 0.25f;
+            float hy2 = -1.0f + (g_whiteHorse2Row + 0.5f) * 0.25f;
+            whiteHorse.draw(hx2, hy2);
+
 
             //white rook 1
             float wr1x = -1.0f + (g_whiteRook1Col + 0.5f) * 0.25f;
@@ -224,6 +280,44 @@ int main()
             float by = -1.0f + (g_blackRow + 0.5f) * 0.25f;
             blackQueen.draw(bx, by);
 
+            // newly added Black horse
+            float hx = -1.0f + (g_blackHorseCol + 0.5f) * 0.25f;
+            float hy = -1.0f + (g_blackHorseRow + 0.5f) * 0.25f;
+            blackHorse.draw(hx, hy);
+
+            float hx2 = -1.0f + (g_blackHorse2Col + 0.5f) * 0.25f;
+            float hy2 = -1.0f + (g_blackHorse2Row + 0.5f) * 0.25f;
+            blackHorse.draw(hx2, hy2);
+
+        }
+
+        if (g_whiteBishopAlive) {
+            float bx = -1.0f + (g_whiteBishopCol + 0.5f) * 0.25f;
+            float by = -1.0f + (g_whiteBishopRow + 0.5f) * 0.25f;
+
+            whiteBishop.draw(bx, by);
+        }
+
+        if (g_blackBishopAlive) {
+            float bx = -1.0f + (g_blackBishopCol + 0.5f) * 0.25f;
+            float by = -1.0f + (g_blackBishopRow + 0.5f) * 0.25f;
+
+            blackBishop.draw(bx, by);
+        }
+
+        if (g_whiteBishop2Alive) {
+            float bx = -1.0f + (g_whiteBishop2Col + 0.5f) * 0.25f;
+            float by = -1.0f + (g_whiteBishop2Row + 0.5f) * 0.25f;
+
+            whiteBishop.draw(bx, by);
+        }
+
+        if (g_blackBishop2Alive) {
+            float bx = -1.0f + (g_blackBishop2Col + 0.5f) * 0.25f;
+            float by = -1.0f + (g_blackBishop2Row + 0.5f) * 0.25f;
+
+            blackBishop.draw(bx, by);
+
             //black rook 1
             float br1x = -1.0f + (g_blackRook1Col + 0.5f) * 0.25f;
             float br1y = -1.0f + (g_blackRook1Row + 0.5f) * 0.25f;
@@ -239,6 +333,8 @@ int main()
             float bpy = -1.0f + (g_blackPawnRow + 0.5f) * 0.25f;
             blackPawn.draw(bpx, bpy);
         }
+
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
