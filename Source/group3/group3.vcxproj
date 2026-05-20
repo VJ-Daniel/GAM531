@@ -152,10 +152,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Objects\Pieces\horse.cpp" />
     <ClCompile Include="Objects\Pieces\queen.cpp" />
     <ClCompile Include="Objects\Scene\chessBoard.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Objects\Pieces\horse.h" />
     <ClInclude Include="Objects\Pieces\queen.h" />
     <ClInclude Include="Objects\Scene\chessBoard.h" />
   </ItemGroup>

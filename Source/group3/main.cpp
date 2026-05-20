@@ -199,8 +199,8 @@ int main()
             glfwSetWindowTitle(window, g_whiteAlive ? "White wins!" : "Black wins!");
         else
             glfwSetWindowTitle(window, g_whiteTurn
-                ? "Chess Queens  |  White's turn — click queen to select"
-                : "Chess Queens  |  Black's turn — click queen to select");
+                ? "Chess Queens  |  White's turn ï¿½ click queen to select"
+                : "Chess Queens  |  Black's turn ï¿½ click queen to select");
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
